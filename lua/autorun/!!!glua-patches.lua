@@ -1099,9 +1099,13 @@ if CLIENT or SERVER then
         function util.GetPlayerTrace( ply, dir )
             local start = ply:EyePos()
 
+            dir = dir and Vector( dir ) or ply:GetAimVector()
+            dir:Mul( distance )
+            dir:Add( start )
+
             return {
                 start = start,
-                endpos = start + ( ( dir or ply:GetAimVector() ) * distance ),
+                endpos = dir,
                 filter = ply
             }
         end
@@ -1115,42 +1119,54 @@ if CLIENT or SERVER then
         end
 
         function PLAYER:GetEyeTrace()
+            local tab = self:GetTable()
+
             if CLIENT then
-                if self.m_iLastEyeTrace == engine_TickCount() then
-                    return self.m_tEyeTrace
+                if tab.m_iLastEyeTrace == engine_TickCount() then
+                    return tab.m_tEyeTrace
                 end
 
-                self.m_iLastEyeTrace = engine_TickCount()
+                tab.m_iLastEyeTrace = engine_TickCount()
             end
 
             local start = self:EyePos()
 
+            local endpos = ply:GetAimVector()
+            endpos:Mul( distance )
+            endpos:Add( start )
+
             trace.start = start
-            trace.endpos = start + ( self:GetAimVector() * distance )
+            trace.endpos = start + ( endpos )
             trace.filter = self
 
             local traceResult = TraceLine( trace )
-            self.m_tEyeTrace = traceResult
+            tab.m_tEyeTrace = traceResult
             return traceResult
         end
 
         function PLAYER:GetEyeTraceNoCursor()
+            local tab = self:GetTable()
+
             if CLIENT then
-                if self.m_iLastAimTrace == engine_TickCount() then
-                    return self.m_tAimTrace
+                if tab.m_iLastAimTrace == engine_TickCount() then
+                    return tab.m_tAimTrace
                 end
 
-                self.m_iLastAimTrace = engine_TickCount()
+                tab.m_iLastAimTrace = engine_TickCount()
             end
 
             local start = self:EyePos()
 
+            local endpos = self:EyeAngles():Forward()
+            endpos:Mul( distance )
+            endpos:Add( start )
+
             trace.start = start
-            trace.endpos = start + ( self:EyeAngles():Forward() * distance )
+            trace.endpos = endpos
             trace.filter = self
 
             local traceResult = TraceLine( trace )
-            self.m_tAimTrace = traceResult
+            tab.m_tAimTrace = traceResult
             return traceResult
         end
 
